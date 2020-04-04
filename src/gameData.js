@@ -13,6 +13,7 @@ import TwentyOneQuestions from './games/twentyOneQuestions/TwentyOneQuestions.js
 import burst_Forth from "./games/Burst_Forth/burstForth.js";
 import fight from "./games/fight/fight.js";
 import uno from './games/uno/uno.js';
+import Werewolf from './games/werewolf/Werewolf.js';
 
 const gameData = {
 
@@ -151,6 +152,15 @@ const gameData = {
     maxUsers: 10,
     component: GoogleGossip
   },
+
+  werewolf:{
+    title: "Werewolf",
+    author: "Liwei Huang",
+    description: "basically mafia",
+    minUsers: 1,
+    maxUsers: Infinity,
+    component: Werewolf
+  }
 
 };
 
