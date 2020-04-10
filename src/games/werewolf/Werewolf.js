@@ -5,12 +5,15 @@ import UserApi from '../../UserApi.js';
 import firebase from 'firebase';
 import { List, ListItem } from 'material-ui/List';
 import "./Werewolf.css"
+//components
+import Lobby from "./components/Lobby/Lobby.js";
+import Game from "./components/Game/Game.js";
 
 export default class Werewolf extends GameComponent {
   constructor(props) {
     super(props);
     this.state = {
-      lobbies: {},
+      lobby: {},
       userList: {},
       pulse: null,
       myself: {}
@@ -19,7 +22,7 @@ export default class Werewolf extends GameComponent {
     this.timer = undefined;
   }
 
-
+  //virtual server
   async isOnline(userSessionId){
     return await this.firebaseRef.child("virtualServer").child("userList").once("value", (data) => {
       let userList = data.val();
@@ -71,6 +74,7 @@ export default class Werewolf extends GameComponent {
     let newRef = userList.push();
     let key = newRef.key;
     myself.key = key;
+    myself.location = "lobby";
     //set state
     component.setState({myself: myself});
     //set new ref
@@ -102,6 +106,30 @@ export default class Werewolf extends GameComponent {
         }
       });
     });
+    //fetch lobby
+    let lobbyRef = fb.child("lobby");
+    lobbyRef.once("value", (data) => {
+      if (data){
+        //data exist, write into state
+        this.setState({lobby: data});
+      }else{
+        //data does not exist, create data
+        lobbyRef.set({}, (e) => {
+          if (e) throw e;
+        });
+      }
+    })
+    //set handler on lobby
+    lobbyRef.on("value", (snapshot) => {
+      let data = snapshot.val();
+      this.setState({lobby: data});
+    });
+    //set handler on lobby chat
+    let lobbyChatRef = fb.child("lobbyChat");
+    lobbyChatRef.on("value", (snapshot) => {
+      let data = snapshot.val();
+      this.setState({lobbyChat: data});
+    })
     //set handler on new user
     virtualServer.child("userList").on("value", (snapshot) => {
       console.log("user list changed: ");
@@ -215,9 +243,25 @@ export default class Werewolf extends GameComponent {
     }
   }
 
+  //lobby
+  onChatMessage(message){
+    console.log(`Main received: ${message}`)
+    let fb = this.firebaseRef;
+    let newRef = fb.child("lobbyChat").push();
+    let currentUser = this.getMyUserId();
+    let chat = new Chat(message, UserApi.getPhotoUrl(currentUser), UserApi.getName(currentUser));
+    newRef.set(chat, (e) => {
+      if (e) throw e;
+    })
+  }
+
+  //rendering
   render() {
+    //get some stuff
     var id = this.getSessionId();
     var currentUser = this.getMyUserId();
+    let userProfilePicUrl = UserApi.getPhotoUrl(currentUser);
+    let username = UserApi.getName(currentUser);
     var users = this.getSessionUserIds().map((user_id) => (
       <li key={user_id}>{user_id}</li>
     ));
@@ -230,21 +274,38 @@ export default class Werewolf extends GameComponent {
       userListJSX.push(<li key={key}>{user.key}</li>);
     }
 
-    return (
-      <div>
-        <p>Session ID: {id}</p>
-        <p>Session creator: {creator}</p>
-        <p>Your ID: {currentUser}</p>
-        <p>Your Key: </p>
-        <p>{(this.state.myself.key) || undefined}</p>
-        <p>All User:</p>
-        <ul> {users} </ul>
-        <p>Current Pulse: </p>
-        <p>{(this.state.pulse) || undefined}</p>
-        <p>Connected User: </p>
-        <ul> {userListJSX} </ul>
-      </div>
-    );
+    let location = this.state.myself.location;
+    if (location === "lobby"){
+      //lobby
+      return(
+        <div className="werewolf">
+          <Lobby sendMessage={(m) => this.onChatMessage(m)} gameList={this.state.lobby} userProfilePic={userProfilePicUrl} username={username} lobbyChat={this.state.lobbyChat}></Lobby>
+        </div>
+      )
+    }else{
+      //emptiness
+      return (
+        <div className="werewolf">Now Loading...</div>
+      )
+    }
+
+    // old stuff
+    // return (
+      
+    //   <div>
+    //     <p>Session ID: {id}</p>
+    //     <p>Session creator: {creator}</p>
+    //     <p>Your ID: {currentUser}</p>
+    //     <p>Your Key: </p>
+    //     <p>{(this.state.myself.key) || undefined}</p>
+    //     <p>All User:</p>
+    //     <ul> {users} </ul>
+    //     <p>Current Pulse: </p>
+    //     <p>{(this.state.pulse) || undefined}</p>
+    //     <p>Connected User: </p>
+    //     <ul> {userListJSX} </ul>
+    //   </div>
+    // );
 
   }
 }
@@ -261,6 +322,21 @@ class LocalUser{
   }
   getId(){
     return this.userId;
+  }
+}
+
+class Room{
+  consturctor(creator){
+    this.creator = creator;
+    this.userList = [];
+  }
+}
+
+class Chat{
+  constructor(message, picture, username){
+    this.message = message;
+    this.picture = picture;
+    this.username = username;
   }
 }
 
