@@ -1,5 +1,3 @@
-
-
 .lobby{
     border: solid 5px black;
     width: 75vw;
@@ -118,4 +116,27 @@
 .lobbyBot{
     height: 70%;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.lobbyBotBot{
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+
+.lobbyCreateRoom{
+    height: 20%;
+    border-bottom: solid 5px;
+    display: flex;
+}
+
+.lobbyCreateRoomButton{
+    margin: auto;
+    border: solid 5px;
+    border-radius: 25%;
+    font-size: 2vw;
+    background: lightgray;
+    font-weight: 600;
 }

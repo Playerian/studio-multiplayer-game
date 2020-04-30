@@ -255,6 +255,10 @@ export default class Werewolf extends GameComponent {
     })
   }
 
+  onCreateRoom(event){
+    
+  }
+
   //rendering
   render() {
     //get some stuff
@@ -279,7 +283,14 @@ export default class Werewolf extends GameComponent {
       //lobby
       return(
         <div className="werewolf">
-          <Lobby sendMessage={(m) => this.onChatMessage(m)} gameList={this.state.lobby} userProfilePic={userProfilePicUrl} username={username} lobbyChat={this.state.lobbyChat}></Lobby>
+          <Lobby 
+            sendMessage={(m) => this.onChatMessage(m)} 
+            gameList={this.state.lobby} 
+            userProfilePic={userProfilePicUrl} 
+            username={username} 
+            lobbyChat={this.state.lobbyChat}
+            onCreateRoom={(e) => this.onCreateRoom(e)}
+          />
         </div>
       )
     }else{
@@ -326,9 +337,15 @@ class LocalUser{
 }
 
 class Room{
-  consturctor(creator){
-    this.creator = creator;
+  consturctor(creatorId, creatorKey){
+    this.creatorId = creatorId;
+    this.creatorKey = creatorKey;
     this.userList = [];
+    this.currentStep = undefined;
+    this.roomId = undefined;
+    this.chat = [];
+    this.werewolfChat = [];
+    this.gameStarted = false;
   }
 }
 
