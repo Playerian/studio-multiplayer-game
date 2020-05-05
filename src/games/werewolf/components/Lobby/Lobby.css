@@ -121,7 +121,7 @@
 }
 
 .lobbyBotBot{
-    height: 100%;
+    height: 80%;
     width: 100%;
     display: flex;
 }
@@ -139,4 +139,122 @@
     font-size: 2vw;
     background: lightgray;
     font-weight: 600;
+}
+
+/* create room menu css */
+.lobbyCreateRoomOption{
+    width: 100%;
+    padding: 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.createRoomRow{
+    display: flex;
+}
+
+.optionName{
+    width: 33%;
+}
+
+.createRoomButton{
+    margin: auto;
+    border: solid 5px;
+    padding: 1%;
+    border-radius: 15%;
+    background: lightpink;
+}
+
+/* lobby room css */
+.lobbyRoom{
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.lobbyRoomName{
+    width: 100%;
+    height: 20%;
+    text-align: center;
+    font-size: 2vw;
+    font-weight: 600;
+}
+
+.lobbyRoomUserContainer{
+    height: 60%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    overflow-y: scroll;
+}
+
+.lobbyRoomUser{
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+    height: fit-content;
+}
+
+.lobbyRoomUserIcon{
+    max-width: 100%;
+}
+
+.lobbyRoomUserName{
+    margin: auto;
+}
+
+.lobbyRoomButtonContainer{
+    display: flex;
+    height: 20%;
+    width: 100%;
+    justify-content: space-around;
+}
+
+.lobbyRoomButton{
+    margin: auto;
+    border: solid 5px;
+    padding: 1%;
+    border-radius: 15%;
+    background: lightpink;
+}
+
+/* lobby room list css */
+.lobbyRoomList{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    overflow-y: scroll;
+}
+
+.roomListSadness{
+    margin: auto;
+    font-size: 3vw;
+}
+
+.roomListContent{
+    height: fit-content;
+    border: solid 3px;
+    border-radius: 15%;
+    padding: 0.1vw;
+    margin: auto;
+    background: lightgoldenrodyellow;
+    display: flex;
+    flex-direction: column;
+    min-width: 30%;
+}
+
+.roomListName{
+    border: solid 3px;
+    border-radius: 15%;
+    background: lightblue;
+}
+
+.roomListJoin{
+    border: solid 2px;
+    background: lightsalmon;
+    margin: auto;
 }

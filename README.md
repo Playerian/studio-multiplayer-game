@@ -36,5 +36,5 @@ go to night
 4 - 1 werewolf 1 investigator 2 villager
 5 - 2 werewolf 1 investigator 2 villager with sheriff
 6 - 2 werewolf 1 investigator 1 doctor 2 villager
-7 - 3 werewolf 1 investigator 1 doctor 2 villager with sheriff
-8 - 3 werewolf 1 investigator 1 doctor 1 hunter 2 villager
+7 - 2 werewolf 1 investigator 1 doctor 3 villager with sheriff
+8 - 3 werewolf 1 investigator 1 doctor 3 villager

@@ -15,16 +15,27 @@ export default class Lobby extends React.Component {
         this.props.sendMessage(message);
     }
 
-    onCreateRoom(e){
-        this.props.onCreateRoom(e);
+    onCreateRoom(name, max){
+        this.props.onCreateRoom(name, max);
     }
 
     render(){
         return (
             <div className="lobby">
                 <div className="lobbyLeft">
-                    <LobbyTop userProfilePic={this.props.userProfilePic} username={this.props.username}/>
-                    <LobbyBot onCreateRoom={(e) => this.onCreateRoom(e)}/>
+                    <LobbyTop 
+                        userProfilePic={this.props.userProfilePic} 
+                        username={this.props.username}
+                    />
+                    <LobbyBot 
+                        location={this.props.location}
+                        roomList={this.props.roomList}
+                        myself={this.props.myself} 
+                        onCreateRoom={(name, max) => this.onCreateRoom(name, max)}
+                        onRoomJoin={(room) => this.props.onRoomJoin(room)}
+                        onRoomExit={(room) => this.props.onRoomExit(room)}
+                        onStartGame={(room) => this.props.onStartGame(room)}
+                    />
                 </div>
                 <LobbyChat lobbyChat={this.props.lobbyChat} sendMessage={(m) => this.receiveChatMessage(m)}/>
             </div>
