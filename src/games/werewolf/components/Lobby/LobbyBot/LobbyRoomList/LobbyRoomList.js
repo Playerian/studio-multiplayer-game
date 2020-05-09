@@ -14,6 +14,10 @@ export default class LobbyRoomList extends React.Component {
         let roomJSX = [];
         for (let thekey in list){
             let room = list[thekey];
+            //dont append in game rooms
+            if (room.game){
+                break;
+            }
             roomJSX.push(
             <div className="roomListContent" key={room.id + "container"}>
                 <div className="roomListName" key={room.id + "name"}>{room.name}</div>

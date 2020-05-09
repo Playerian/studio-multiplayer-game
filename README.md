@@ -7,7 +7,7 @@ werewolf - killer
 sheriff - vote count as 2
 
 ## rule
-When killed, do not show role, but leave a piece of text.
+<!-- When killed, do not show role, but leave a piece of text.
 When voting, people 
 Maximum characters in one text is 30.
 # first night
@@ -18,7 +18,7 @@ round table talk
 if round with sheriff
   apply for sheriff 
   vote for sheriff, ppl who apply can not vote
-no vote to kill
+no vote to kill -->
 # repeat
 night:
 investigator search

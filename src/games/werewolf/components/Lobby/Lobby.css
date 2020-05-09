@@ -81,6 +81,28 @@
     font-size: 0.5vw;
 }
 
+.lobbyChatTabs{
+    display: flex;
+}
+
+.lobbyChatTab{
+    font-size: 0.5vw;
+    border-left: solid 2px;
+    border-right: solid 2px;
+    border-top: solid 2px;
+    border-top-left-radius: 25%;
+    border-top-right-radius: 25%;
+    margin-top: 5%;
+    text-align: center;
+}
+
+.lobbyChatTabFiller{
+    border-bottom: solid 5px;
+    flex-grow: 1;
+    border-radius: 0px;
+    margin-top: 5%;
+}
+
 /* Lobby Top CSS */
 .lobbyTop{
     border-bottom: solid 5px;

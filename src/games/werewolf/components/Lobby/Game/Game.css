@@ -1,0 +1,79 @@
+.gameDiv{
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.gameColumn1, .gameColumn2, .gameColumn3{
+    height: 100%;
+    width: 50%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.gameColumn1, .gameColumn3{
+    width: 25%;
+    flex-direction: column;
+}
+
+.gameColumn2{
+    flex-direction: column;
+}
+
+.gameTopContainer, .gameBotContainer{
+    height: 25%;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+
+.gameMid{
+    height: 50%;
+    border: solid 5px;
+}
+
+.gameUserContainer{
+    height: fit-content;
+    margin: auto;
+    max-width: 25%;
+    display: flex;
+    flex-direction: column;
+}
+
+.gameUserPic{
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.gameUserPosition{
+    margin: auto;
+    border: solid 1px;
+    background: lightskyblue;
+}
+
+.gameUserName{
+    margin: auto;
+    text-align: center;
+    font-size: 0.5vw;
+}
+
+.gameUserContainerColumn{
+    width: 100%;
+    max-width: none;
+    max-height: 25%;
+}
+
+.gameUserGuess{
+    text-align: center;
+}
+
+/* picker */
+.gameUserPicker{
+    position: absolute;
+    width: fit-content;
+    height: fit-content;
+    display: flex;
+    border: 1px solid;
+    border-radius: 25%;
+    background: mistyrose;
+}

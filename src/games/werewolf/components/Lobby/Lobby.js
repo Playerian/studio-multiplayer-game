@@ -4,15 +4,16 @@ import "./Lobby.css"
 import LobbyTop from "./LobbyTop/LobbyTop.js"
 import LobbyBot from "./LobbyBot/LobbyBot.js"
 import LobbyChat from "./LobbyChat/LobbyChat.js"
+import Game from "./Game/Game"
 
 export default class Lobby extends React.Component {
     constructor(props) {
         super(props);
     }
 
-    receiveChatMessage(message){
+    receiveChatMessage(message, tabName){
         console.log("Lobby received: " + message);
-        this.props.sendMessage(message);
+        this.props.sendMessage(message, tabName);
     }
 
     onCreateRoom(name, max){
@@ -20,6 +21,22 @@ export default class Lobby extends React.Component {
     }
 
     render(){
+        let room = this.props.room;
+        let me = this.props.myself;
+        //check if in game
+        if (room){
+            let game = room.game;
+            if (game){
+                return (
+                    <div className="lobby">
+                        <div className="lobbyLeft">
+                            <Game game={game} me={me}/>
+                        </div>
+                        <LobbyChat chatList={this.props.chatList} sendMessage={(m, r) => this.receiveChatMessage(m, r)}/>
+                    </div>
+                )
+            }
+        }
         return (
             <div className="lobby">
                 <div className="lobbyLeft">
@@ -37,7 +54,7 @@ export default class Lobby extends React.Component {
                         onStartGame={(room) => this.props.onStartGame(room)}
                     />
                 </div>
-                <LobbyChat lobbyChat={this.props.lobbyChat} sendMessage={(m) => this.receiveChatMessage(m)}/>
+                <LobbyChat chatList={this.props.chatList} sendMessage={(m, r) => this.receiveChatMessage(m, r)}/>
             </div>
         )
     }
