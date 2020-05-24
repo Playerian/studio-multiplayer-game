@@ -20,6 +20,13 @@ export default class Lobby extends React.Component {
         this.props.onCreateRoom(name, max);
     }
 
+    handleUserClick(index){
+        let room = this.props.room;
+        let me = this.props.myself;
+        let game = room.game;
+        this.props.updateCommand(game, game.commandList[me.key], index);
+    }
+
     render(){
         let room = this.props.room;
         let me = this.props.myself;
@@ -30,7 +37,7 @@ export default class Lobby extends React.Component {
                 return (
                     <div className="lobby">
                         <div className="lobbyLeft">
-                            <Game game={game} me={me}/>
+                            <Game game={game} me={me} isDead={me.isDead} handleUserClick={(i) => this.handleUserClick(i)}/>
                         </div>
                         <LobbyChat chatList={this.props.chatList} sendMessage={(m, r) => this.receiveChatMessage(m, r)}/>
                     </div>

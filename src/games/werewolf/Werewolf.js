@@ -375,7 +375,7 @@ export default class Werewolf extends GameComponent {
       newRef.set(chat, (e) => {
         if (e) throw e;
       });
-    }else if (tabName === "roomChat" || tabName === "werewolfChat"){
+    }else if (tabName === "roomChat" || tabName === "werewolfChat" || tabName === "gameChat"){
       let me = this.state.myself;
       if (me.roomID){
         let room = this.state.roomList[me.roomID];
@@ -385,7 +385,16 @@ export default class Werewolf extends GameComponent {
             room.game.werewolfChat = [];
           }
           room.game.werewolfChat.push(chat);
-          fb.child("roomList").child(me.roomID).set(room);
+          fb.child("roomList").child(me.roomID).child("game").child("werewolfChat").set(room.game.werewolfChat);
+        }else if (tabName === "gameChat"){
+          //check if current speaker
+          if (room.game.speakerKey === me.key){
+            if (!room.game.gameChat){
+              room.game.gameChat = [];
+            }
+            room.game.gameChat.push(chat);
+            fb.child("roomList").child(me.roomID).child("game").child("gameChat").set(room.game.gameChat);
+          }
         }else{
           if (!room.chat){
             room.chat = [];
@@ -452,7 +461,7 @@ export default class Werewolf extends GameComponent {
   onRoomExit(user, room){
     let me = user;
     let fb = this.firebaseRef;
-    if (!room){
+    if (!room || !room.creatorKey){
       console.log("not room");
       return;
     }
@@ -534,6 +543,11 @@ export default class Werewolf extends GameComponent {
       let fb = this.firebaseRef;
       //check if creator
       if (room.creatorKey === me.key){
+        //check # of ppl
+        if (room.userList.length < 4){
+          alert("Minimum player is 4");
+          return;
+        }
         //start game
         let game = new Game(me, room.userList);
         room.inGame = true;
@@ -577,42 +591,207 @@ export default class Werewolf extends GameComponent {
   }
 
   runningTheGame(game){
+    if (!game){
+      return;
+    }
     let fb = this.firebaseRef;
     let me = this.state.myself;
-    console.log("up and running");
     let timeoutMs = 0;
     //first night
     if (game.step === "identify"){
       game.judge = "Werewolfs, wake up and identify each other";
       timeoutMs = 5000;
-      game.step = "investigate";
+      game.step = "killing";
     }
     //cycle
     else if (game.step === "killing"){
       game.judge = "Werewolfs, wake up and choose a player to kill";
+      let keys = this.getUserKeyByRole(game, "werewolf");
+      for (let i = 0; i < keys.length; i ++){
+        if (keys[i]){
+          let key = keys[i];
+          let command = new Command(key, undefined, "any");
+          game.commandList[key] = command;
+        }
+      }
       timeoutMs = 15000;
       game.step = "investigate";
     }
+
     else if (game.step === "investigate"){
+      //determine who got killed
+      let userKeys = this.getUserKeyByRole(game, "werewolf");
+      let indexArray = [];
+      for (let i = 0; i < userKeys.length; i ++){
+         let command = game.commandList[userKeys[i]];
+         if (this.validateCommand(game, command)){
+          indexArray.push(command.value);
+         }
+      }
+      let result = this.findVotingResult(indexArray);
+      //set killing(index)
+      game.killing = result || randomInt(0, game.userList.length - 1);
+      //cleanse commandList
+      game.commandList = this.resetCommandList();
+      //set judge
       game.judge = "Investigator, wake up and choose a person to investigate.";
       timeoutMs = 10000;
+      //attach command to investigator
+      let key = this.getUserKeyByRole(game, "investigator")[0];
+      //prevent situation where no one is investigator
+      if (key){
+        let command = new Command(key, undefined, "other");
+        game.commandList[key] = command;
+      }
+      game.step = "investigatorResult";
+
+    }else if (game.step === "investigatorResult"){
+      let userKey = this.getUserKeyByRole(game, "investigator")[0];
+      if (userKey){
+        if (this.validateCommand(game, game.commandList[userKey])){
+          let index = game.commandList[userKey].value;
+          let player = game.userList[index];
+          if (player){
+            //display result
+            if (player.role === "werewolf"){
+              game.investResult = "The person you investigated is a werewolf";
+            }else{
+              game.investResult = "The person you investigated is not a werewolf";
+            }
+          }
+          //remove command
+          game.commandList = this.resetCommandList();
+        }
+      }
+      timeoutMs = 5000;
       game.step = "doctor";
+
     }else if (game.step === "doctor"){
+      game.investResult = null;
       game.judge = "Doctor, wake up and apply medicine to another player";
+      let key = this.getUserKeyByRole(game, "doctor")[0];
+      if (key){
+        let command = new Command(key, undefined, "any");
+        game.commandList[key] = command;
+      }
       timeoutMs = 10000;
       game.step = "day";
+
     }else if (game.step === "day"){
       game.judge = "Time passed, now is the day.";
-      timeoutMs = 10000;
+      //fetch doctor command
+      let userKey = this.getUserKeyByRole(game, "doctor")[0];
+      if (userKey){
+        //doctor exists
+        if (this.validateCommand(game, game.commandList[userKey])){
+          let index = game.commandList[userKey].value;
+          game.curing = index || randomInt(game.userList.length - 1);
+        }else{
+          //random heal if doctor doesnt pick
+          game.curing = randomInt(game.userList.length - 1);
+        }
+      }
+      timeoutMs = 5000;
       game.step = "announce";
+
     }else if (game.step === "announce"){
+      let judgeWords = "nothing";
+      //check dead
+      //prevent 0 makes false
+      //actual index = + 1
+      if (Number.isInteger(game.killing)){
+        //check doctor
+        let successfulCure = false;
+        if (Number.isInteger(game.curing)){
+          //check if same
+          if (game.curing === game.killing){
+            successfulCure = true;
+          }
+        }
+        if (successfulCure){
+          judgeWords = "This night, no one has died.";
+        }else{
+          //kill
+          judgeWords = (game.killing + 1) + " has been killed";
+          //splice lists
+          let user = game.userList[game.killing];
+          game = this.removePlayer(game, user);
+        }
+      }
+      //announce dead
+      game.judge = judgeWords;
+      timeoutMs = 5000;
+      game.step = "discussion";
 
     }else if (game.step === "discussion"){
+      let indexA = game.discussionIndex;
+      if (indexA === null || indexA === undefined){
+        indexA = 0;
+      }else{
+        indexA ++;
+      }
+
+      timeoutMs = 15000;
+
+      //set speaker
+      let user = game.userList[indexA];
+      while(user.isDead){
+        indexA ++;
+        user = game.userList[indexA];
+        if (!user){
+          game.step = "vote";
+          timeoutMs = 100;
+          break;
+        }
+      }
+      if (indexA === game.userList.length - 1){
+        //next step if last player
+        game.step = "vote";
+      }
+      if (user){
+        game.speakerKey = user.key;
+        game.judge = `Now the player at position ${indexA + 1} ${user.username} have 15 second to speak in the game channel.`;
+        game.discussionIndex = indexA;
+      }
 
     }else if (game.step === "vote"){
+      //reset vars
+      game.discussionIndex = null;
+      game.speakerKey = null;
+      //attach command to living people
+      for (let i = 0; i < game.aliveList.length; i ++){
+        let key = game.aliveList[i].key;
+        let command = new Command(key, undefined, "any");
+        game.commandList[key] = command;
+      }
+      //set judge
+      game.judge = `Players now vote for a player to kill that they suspect to be the werewolf.`
+      game.step = "hang";
+      timeoutMs = 20000;
 
     }else if (game.step === "hang"){
-      
+      //retrieve command
+      let cValue = [];
+      for (let key in game.commandList){
+        if (this.validateCommand(game, game.commandList[key])){
+          if (Number.isInteger(game.commandList[key].value)){
+            cValue.push(game.commandList[key].value);
+          }else{
+            cValue.push(game.aliveList[randomInt(0, game.aliveList.length - 1)].place);
+          }
+        }
+      }
+      //killing time
+      let result = this.findVotingResult(cValue);
+      let userObj = game.userList[result];
+      //cleanse commandList
+      game.commandList = this.resetCommandList();
+      //remove player from existence
+      game = this.removePlayer(game, userObj);
+      game.judge = `The player at position ${result + 1} ${userObj.username} has been voted to be killed.`;
+      timeoutMs = 5000;
+      game.step = "night";
+
     }else if (game.step === "night"){
       game.judge = "Time passed, now is the night.";
       timeoutMs = 5000;
@@ -621,12 +800,54 @@ export default class Werewolf extends GameComponent {
     //timeout
     if (timeoutMs >= 0){
       let timerID = setTimeout(() => {
-        this.runningTheGame(game);
+        //timer
+        //fetch firebase first
+        fb.child("roomList").child(me.roomID).child("game").once("value", (snapshot) => {
+          this.runningTheGame(snapshot.val());
+        });
       }, timeoutMs);
       this.setState({timerID: timerID});
     }
     //update
     fb.child("roomList").child(me.roomID).child("game").set(game);
+  }
+
+  updateCommand(game, command, index){
+    command.value = index;
+    //update firebase
+    let fb = this.firebaseRef;
+    let me = this.state.myself;
+    fb.child("roomList").child(me.roomID).child("game").child("commandList").child(command.key).set(command);
+  }
+
+  onCommandUpdate(game, command){
+
+  }
+
+  resetCommandList(commandList){
+    return {sample: new Command(0)};
+  }
+
+  removePlayer(game, user){
+    ///kill player in game
+    if (!user){
+      console.log("not user");
+    }
+    user.isDead = true;
+    let aliveIndex;
+    game.aliveList.forEach((v, i) => {
+      if (v.key === user.key){
+        aliveIndex = i;
+        return;
+      }
+    });
+    game.aliveList.splice(aliveIndex, 1);
+    if (game.deadList){
+      game.deadList.push(user);
+    }else{
+      game.deadList = [user];
+    }
+    return game;
   }
 
   onGameUpdate(game){
@@ -637,16 +858,85 @@ export default class Werewolf extends GameComponent {
       this.onRoomExit(me, this.state.roomList[me.roomID])
       return;
     }
-    console.log(game);
-    //check if input is needed
-    if (game.commandList[me.key]){
-      
-    }
+    //set yourself
+    game.userList.forEach((v) => {
+      if (v.key === me.key){
+        me = v;
+        return;
+      }
+    })
     //final setState
     this.state.room.game = game;
     this.setState({
-      room: this.state.room
+      room: this.state.room,
+      myself: me
     });
+  }
+
+  getUserKeyByRole(game, role){
+    let result = [];
+    game.userList.forEach((v, i) => {
+      if (v.role === role){
+        if (!v.isDead){
+          result.push(v.key);
+        }
+      }
+    });
+    return result;
+  }
+
+  validateCommand(三千世界, 佛法){
+    let 佛曰 = 佛法.target;
+    let 佛 = 三千世界.userList[佛法.value];
+    if (!佛){
+      return false;
+    }
+    if (佛曰 === "any"){
+      if (佛.key){
+        return true;
+      }
+    }else if (佛曰 === "good"){
+      if (佛.role !== "werewolf"){
+        return true;
+      }
+    }else if (佛曰 === "bad"){
+      if (佛.role === "werewolf"){
+        return true;
+      }
+    }else{
+      return undefined;
+    }
+    return false;
+  }
+
+  findVotingResult(arrayVote){
+    ///receive array of number [0, 1, 2, 3, 3, 5, 5, 5] = 5 returns a random max occurance 
+    let max = 0;
+    let result;
+    let theList = new Array(arrayVote.length).fill(0);
+    let dupeMax = false;
+    let maxIndex = 0;
+    for (let i = 0; i < arrayVote.length; i ++){
+      if (!Number.isInteger(theList[arrayVote[i]])){
+        theList[arrayVote[i]] = 1;
+      }else{
+        theList[arrayVote[i]] ++;
+      }
+      if (theList[arrayVote[i]] > max){
+        max = theList[arrayVote[i]];
+        maxIndex = [i];
+        dupeMax = false;
+      }else if(theList[arrayVote[i]] === max){
+        dupeMax = true;
+        maxIndex.push(i);
+      }
+    }
+    if (dupeMax){
+      result = arrayVote[maxIndex[Math.floor(Math.random() * maxIndex.length)]];
+    }else{
+      result = arrayVote[maxIndex[0]];
+    }
+    return result;
   }
 
   //rendering
@@ -678,6 +968,7 @@ export default class Werewolf extends GameComponent {
         if (me.role === "werewolf"){
           chatList.werewolfChat = room.game.werewolfChat;
         }
+        chatList.gameChat = room.game.gameChat;
       }
     }
     //location conditional render
@@ -702,6 +993,8 @@ export default class Werewolf extends GameComponent {
             location={location}
             myself={this.state.myself}
             room={this.state.room}
+            //game
+            updateCommand={(game, command, index) => this.updateCommand(game, command, index)}
           />
         </div>
       )
@@ -747,6 +1040,7 @@ class LocalUser{
     //this.roomID = undefined;
     //this.role
     //this.place
+    this.isDead = false;
   }
   getKey(){
     return this.key;
@@ -801,16 +1095,17 @@ class Game{
     //append roles
     for(let i = 0; i < userList.length; i ++){
       let user = userList[i];
-      let index = randomInt(0, roleList.length - 1);
-      let role = roleList[index];
-      let num = playerNum[index];
+      let roleIndex = randomInt(0, roleList.length - 1);
+      let numIndex = randomInt(0, playerNum.length - 1);
+      let role = roleList[roleIndex];
+      let num = playerNum[numIndex];
       user.role = role;
       user.place = num;
       //userList
       this.userList[num] = user;
       //splice
-      roleList.splice(index, 1);
-      playerNum.splice(index, 1);
+      roleList.splice(roleIndex, 1);
+      playerNum.splice(numIndex, 1);
     }
     //basics
     this.gameChat = [];
@@ -827,6 +1122,9 @@ class Game{
     // first night: identify
     // night: werewolf, investigator, doctor,
     // day: announce, discussion, vote
+    this.investResult = null;
+    this.discussionIndex = null;
+    this.speakerKey = null;
   }
 }
 
@@ -839,10 +1137,14 @@ class Chat{
 }
 
 class Command{
-  constructor(targetKey){
+  constructor(targetKey, target, type){
     this.open = true;
     this.key = targetKey;
     this.value = null;
+    //Good or Bad or Any
+    this.target = target || "any";
+    //any, self, other
+    this.type = type || "any";
   }
 }
 

@@ -38,11 +38,14 @@
     max-width: 25%;
     display: flex;
     flex-direction: column;
+    max-height: 100%;
+    background-size: 100% 100%;
 }
 
 .gameUserPic{
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 50%;
+    max-height: 50%;
+    margin: auto;
 }
 
 .gameUserPosition{
@@ -65,6 +68,13 @@
 
 .gameUserGuess{
     text-align: center;
+    font-size: 0.5vw;
+}
+
+.gameUserDead{
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 /* picker */
@@ -76,4 +86,8 @@
     border: 1px solid;
     border-radius: 25%;
     background: mistyrose;
+}
+
+.gameDead{
+    margin-bottom: 50%;
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import "./Game.css"
 import GameMid from "./GameMid/GameMid"
+import CrossImg from"./cross.png"
 
 export default class Game extends React.Component {
     constructor(props) {
@@ -9,12 +10,14 @@ export default class Game extends React.Component {
             guess: new Array(this.props.game.userList.length).fill("?"),
             currentIndex: undefined,
             showing: false,
+            selecting: undefined,
+            isDead: false,
         }
     }
 
     handleGuessClick(event, index){
+        event.stopPropagation();
         let showing = this.state.showing;
-        console.log(index);
         if (this.props.me.place === index){
             return;
         }
@@ -41,6 +44,44 @@ export default class Game extends React.Component {
             showing: false,
             guess: guess
         });
+    }
+
+    handleUserClick(event, index){
+        let me = this.props.me;
+        let game = this.props.game;
+        //check if in game
+        if (game){
+            //check if u are called
+            if (game.commandList[me.key]){
+                let command = game.commandList[me.key];
+                if (command.type === "any"){
+                    this.props.handleUserClick(index);
+                    this.setState({selecting: index});
+                }else if (command.type === "other"){
+                    //check if index is self
+                    if (game.userList[index].key !== me.key){
+                        this.props.handleUserClick(index);
+                        this.setState({selecting: index});
+                    }
+                }
+            }
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        let me = this.props.me;
+        let game = this.props.game;
+        console.log("updating");
+        //remove selecting when not selecting
+        if (game){
+            //check if u are not called
+            if (!game.commandList[me.key]){
+                //remove selecting
+                if (Number.isInteger(this.state.selecting)){
+                    this.setState({selecting: undefined});
+                }
+            }
+        }
     }
 
     render(){
@@ -102,8 +143,23 @@ export default class Game extends React.Component {
                     role = "werewolf";
                 }
             }
+            //if investigator
+            if (me.role === "investigator"){
+                if (game.investResult){
+                    game.judge = game.investResult;
+                }
+            }
+            //if selecting
+            let containerStyle = {};
+            if (i === this.state.selecting){
+                containerStyle.border = "solid 5px yellow";
+            }
+            //if dead
+            if (user.isDead){
+                containerStyle["backgroundImage"] = `url(${CrossImg})`;
+            }
             target.push(
-                <div className={"gameUserContainer " + isColumn} key={"gameUserContainer" + i}>
+                <div style={containerStyle} className={"gameUserContainer " + isColumn} key={"gameUserContainer" + i} onClick={(e) => this.handleUserClick(e, i)}>
                     <div style={style} className="gameUserPosition" key={"gameUserPosition" + i}>{i + 1}</div>
                     <div className="gameUserGuess" index={i} key={"gameUserGuess" + i} onClick={(e) => this.handleGuessClick(e, i)}>{role}</div>
                     <img className="gameUserPic" src={user.profilePic} key={"gameUserPic" + i}/>
@@ -131,7 +187,7 @@ export default class Game extends React.Component {
                     <div className="gameTopContainer">
                         {topJSX}
                     </div>
-                    <GameMid text={game.judge}/>
+                    <GameMid text={game.judge} isDead={this.props.isDead}/>
                     <div className="gameBotContainer">
                         {botJSX}
                     </div>

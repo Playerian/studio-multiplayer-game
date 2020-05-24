@@ -7,10 +7,10 @@ export default class GameMid extends React.Component {
 
     render(){
         let JSX;
-        if (this.props.appear){
+        if (this.props.isDead){
             JSX = (
-                <div className="gameConfirm">confirm</div>
-            )
+                <div className="gameDead">You have been killed! But you can still spectate the game</div>
+            );
         }
         return (
             <div className="gameMid">
