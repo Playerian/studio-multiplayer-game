@@ -71,7 +71,6 @@ export default class Game extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         let me = this.props.me;
         let game = this.props.game;
-        console.log("updating");
         //remove selecting when not selecting
         if (game){
             //check if u are not called
@@ -187,7 +186,7 @@ export default class Game extends React.Component {
                     <div className="gameTopContainer">
                         {topJSX}
                     </div>
-                    <GameMid text={game.judge} isDead={this.props.isDead}/>
+                    <GameMid text={game.judge} isDead={this.props.isDead} showButton={game.end} exitGame={() => this.props.exitGame()}/>
                     <div className="gameBotContainer">
                         {botJSX}
                     </div>

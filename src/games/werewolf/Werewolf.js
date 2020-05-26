@@ -89,11 +89,6 @@ export default class Werewolf extends GameComponent {
       fb.child("lobbyChat").off();
       //room and game
       fb.child("roomList").off();
-      if (user.roomID){
-        if (this.state.didGameStarted){
-          fb.child("roomList").child(user.roomID).child("game").off();
-        }
-      }
     }
     //calling exits on those who should
     if (user.roomID){
@@ -465,42 +460,62 @@ export default class Werewolf extends GameComponent {
       console.log("not room");
       return;
     }
-    if (room.creatorKey === me.key){
-      //room creator exits, destroy room
-      //firebase
-      fb.child("roomList").child(room.id).remove();
-    }else{
-      //member exits
-      //splice
-      let index = 0;
-      for (let i = 0; i < room.userList.length; i ++){
-        let user = room.userList[i];
-        if (user.key === me.key){
-          index = i;
-          break;
-        }
-      }
-      room.userList.splice(index, 1);
-      //firebase
-      if (room.game){
-        fb.child("roomList").child(room.id).remove();
-        console.log("Game terminated due to player disconnect");
-      }else{
-        fb.child("roomList").child(room.id).set(room);
+    // if (room.creatorKey === me.key){
+    //   //room creator exits, inherit to someone else
+    //   room.creator = creator;
+    //   room.creatorId = creator.userId;
+    //   room.creatorKey = creator.key;
+    //   //firebase
+    //   //fb.child("roomList").child(room.id).remove();
+    // }else{
+    //splice index
+    let index;
+    for (let i = 0; i < room.userList.length; i ++){
+      let user = room.userList[i];
+      if (user.key === me.key){
+        index = i;
+        break;
       }
     }
+    if (Number.isInteger(index)){
+      room.userList.splice(index, 1);
+    }
+    //remove game
+    if (room.game){
+      this.exitGame(room.game, me);
+    }
+    //check if need to inherit
+    if (room.creatorKey === me.key){
+      //check if last
+      if (room.userList.length === 0){
+        //destroy room
+        fb.child("roomList").child(room.id).remove();
+      }else{
+        //room creator exits, inherit to someone else
+        let creator = room.userList[0];
+        room.creator = creator;
+        room.creatorId = creator.userId;
+        room.creatorKey = creator.key;
+      }
+    }
+    //set room firebase
+    fb.child("roomList").child(room.id).set(room);
+    // //remove game
+    // if (room.game){
+    //   fb.child("roomList").child(room.id).remove();
+    //   this.exitGame(room.game, me);
+    //   delete me.game;
+    // }else{
+    //   fb.child("roomList").child(room.id).set(room);
+    // }
     //update user
     me.location = "lobby";
-    delete me.game;
-    //me.roomID = undefined;
     delete me.roomID;
-    this.setState({
-      room: undefined,
-      didGameStarted: false
-    });
     if (me.key === this.state.myself.key){
       this.setState({
-        myself: me
+        myself: me,
+        room: undefined,
+        didGameStarted: false
       });
     }
     //final firebase update
@@ -554,11 +569,6 @@ export default class Werewolf extends GameComponent {
         room.game = game;
         //set firebase
         fb.child("roomList").child(me.roomID).set(room);
-        console.log("gameStarting");
-        //if host, engage
-        if (me.key === game.creatorKey){
-          this.runningTheGame(game);
-        }
       }
     }
   }
@@ -576,6 +586,7 @@ export default class Werewolf extends GameComponent {
         break;
       }
     }
+    me.location = "game";
     this.setState({
       myself: me,
       didGameStarted: true
@@ -776,9 +787,9 @@ export default class Werewolf extends GameComponent {
         if (this.validateCommand(game, game.commandList[key])){
           if (Number.isInteger(game.commandList[key].value)){
             cValue.push(game.commandList[key].value);
-          }else{
-            cValue.push(game.aliveList[randomInt(0, game.aliveList.length - 1)].place);
           }
+        }else{
+          cValue.push(game.aliveList[randomInt(0, game.aliveList.length - 1)].place);
         }
       }
       //killing time
@@ -796,6 +807,23 @@ export default class Werewolf extends GameComponent {
       game.judge = "Time passed, now is the night.";
       timeoutMs = 5000;
       game.step = "killing";
+
+    }else if (game.step === "announceWin"){
+      timeoutMs = -1;
+      let winner = this.gameCheckWin(game);
+      if (winner === "werewolf"){
+        game.judge = "Werewolves have won the game!"
+      }else if (winner === "villager"){
+        game.judge = "Villagers have won the game!"
+      }
+      game.judge += " You can exit the menu by clicking the button below.";
+      game.end = true;
+    }
+
+    //check if winning
+    let ifWin = this.gameCheckWin(game);
+    if (ifWin){
+      game.step = "announceWin";
     }
     //timeout
     if (timeoutMs >= 0){
@@ -806,10 +834,51 @@ export default class Werewolf extends GameComponent {
           this.runningTheGame(snapshot.val());
         });
       }, timeoutMs);
+      this.state.timerID = timerID;
       this.setState({timerID: timerID});
     }
     //update
     fb.child("roomList").child(me.roomID).child("game").set(game);
+  }
+
+  exitGame(game, user){
+    let fb = this.firebaseRef;
+    //if actual user
+    if (!user){
+      user = this.state.myself;
+    }
+    user.location = "room";
+    //if alive then dies in game
+    if (!user.isDead){
+      this.removePlayer(game, user);
+    }
+    //inherit if creator
+    if (game){
+      if (game.creatorKey === user.key){
+        if (game.aliveList.length > 0){
+          let inheritor = game.aliveList[0];
+          game.creatorKey = inheritor.key;
+          fb.child("roomList").child(user.roomID).child("game").set(game);
+        }else{
+          //destroy game
+          fb.child("roomList").child(user.roomID).child("game").remove();
+        }
+      }
+    }
+    //check if self
+    if (user.key === this.state.myself.key){
+      //remove timer if exist
+      if (this.state.timerID){
+        clearTimeout(this.state.timerID);
+        this.setState({timerID: undefined});
+      }
+      //final setstate
+      this.setState({
+        didGameStarted: false,
+      });
+      //remove handler
+      fb.child("roomList").child(user.roomID).child("game").off();
+    }
   }
 
   updateCommand(game, command, index){
@@ -818,10 +887,6 @@ export default class Werewolf extends GameComponent {
     let fb = this.firebaseRef;
     let me = this.state.myself;
     fb.child("roomList").child(me.roomID).child("game").child("commandList").child(command.key).set(command);
-  }
-
-  onCommandUpdate(game, command){
-
   }
 
   resetCommandList(commandList){
@@ -854,9 +919,15 @@ export default class Werewolf extends GameComponent {
     let me = this.state.myself;
     if (!game){
       console.log("not a game");
-      //exit right now
-      this.onRoomExit(me, this.state.roomList[me.roomID])
+      //exit game right now
+      this.exitGame();
       return;
+    }
+    if (game.creatorKey === me.key){
+      if (!this.state.timerID){
+        //engage
+        this.runningTheGame(game);
+      }
     }
     //set yourself
     game.userList.forEach((v) => {
@@ -939,6 +1010,16 @@ export default class Werewolf extends GameComponent {
     return result;
   }
 
+  gameCheckWin(game){
+    let ww = this.getUserKeyByRole(game, "werewolf");
+    if (ww.length >= game.aliveList.length / 2){
+      return "werewolf";
+    }else if (ww.length === 0){
+      return "villager";
+    }
+    return false;
+  }
+
   //rendering
   render() {
     //get some stuff server
@@ -973,7 +1054,7 @@ export default class Werewolf extends GameComponent {
     }
     //location conditional render
     let location = this.state.myself.location;
-    if (location === "lobby" || location === "room"){
+    if (location === "lobby" || location === "room" || location === "game"){
       //lobby
       return(
         <div className="werewolf">
@@ -995,6 +1076,7 @@ export default class Werewolf extends GameComponent {
             room={this.state.room}
             //game
             updateCommand={(game, command, index) => this.updateCommand(game, command, index)}
+            exitGame={() => this.exitGame()}
           />
         </div>
       )
@@ -1101,6 +1183,7 @@ class Game{
       let num = playerNum[numIndex];
       user.role = role;
       user.place = num;
+      user.location = "game";
       //userList
       this.userList[num] = user;
       //splice

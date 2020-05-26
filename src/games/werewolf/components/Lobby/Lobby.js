@@ -33,11 +33,11 @@ export default class Lobby extends React.Component {
         //check if in game
         if (room){
             let game = room.game;
-            if (game){
+            if (game && me.location === "game"){
                 return (
                     <div className="lobby">
                         <div className="lobbyLeft">
-                            <Game game={game} me={me} isDead={me.isDead} handleUserClick={(i) => this.handleUserClick(i)}/>
+                            <Game game={game} me={me} isDead={me.isDead} handleUserClick={(i) => this.handleUserClick(i)} exitGame={() => this.props.exitGame()}/>
                         </div>
                         <LobbyChat chatList={this.props.chatList} sendMessage={(m, r) => this.receiveChatMessage(m, r)}/>
                     </div>
