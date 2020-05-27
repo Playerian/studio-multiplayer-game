@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/static/css/main.c1fb5de1.chunk.css",
+    "main.js": "/static/js/main.214c48ea.chunk.js",
+    "main.js.map": "/static/js/main.214c48ea.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.7ccc11a5.js",
+    "runtime-main.js.map": "/static/js/runtime-main.7ccc11a5.js.map",
+    "static/js/2.de49c210.chunk.js": "/static/js/2.de49c210.chunk.js",
+    "static/js/2.de49c210.chunk.js.map": "/static/js/2.de49c210.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.c586b8a5f647bf3e5d784e8d705c87cc.js": "/precache-manifest.c586b8a5f647bf3e5d784e8d705c87cc.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/main.c1fb5de1.chunk.css.map": "/static/css/main.c1fb5de1.chunk.css.map",
+    "static/js/2.de49c210.chunk.js.LICENSE.txt": "/static/js/2.de49c210.chunk.js.LICENSE.txt",
+    "static/media/Logo.png": "/static/media/Logo.4454a02b.png",
+    "static/media/Whisper icon.png": "/static/media/Whisper icon.1687bbe5.png",
+    "static/media/cross.png": "/static/media/cross.0ee69f12.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.7ccc11a5.js",
+    "static/js/2.de49c210.chunk.js",
+    "static/css/main.c1fb5de1.chunk.css",
+    "static/js/main.214c48ea.chunk.js"
+  ]
+}
