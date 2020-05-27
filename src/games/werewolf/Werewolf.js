@@ -333,10 +333,17 @@ export default class Werewolf extends GameComponent {
       //userlist in game update
       if (room.inGame){
         let game = room.game;
+        let userList = game.userList;
         let aliveList = game.aliveList;
         let deadList = game.deadList;
         let done = false;
         //loop
+        userList.forEach((v, i) => {
+          if (v.key === user.key){
+            fb.child("roomList").child(user.roomID).child("game").child("userList").child(i).set(user);
+            return;
+          }
+        });
         aliveList.forEach((v, i) => {
           if (v.key === user.key){
             done = true;
@@ -432,9 +439,8 @@ export default class Werewolf extends GameComponent {
       //if creator destroys room
       let room = roomList[me.roomID];
       if (!room){
-        //exists
-        me.location = "lobby";
-        delete me.roomID;
+        //exit room
+        this.onRoomExit(me);
         alert("Room has been deleted by the host.");
         return;
       }
@@ -456,58 +462,40 @@ export default class Werewolf extends GameComponent {
   onRoomExit(user, room){
     let me = user;
     let fb = this.firebaseRef;
-    if (!room || !room.creatorKey){
-      console.log("not room");
-      return;
-    }
-    // if (room.creatorKey === me.key){
-    //   //room creator exits, inherit to someone else
-    //   room.creator = creator;
-    //   room.creatorId = creator.userId;
-    //   room.creatorKey = creator.key;
-    //   //firebase
-    //   //fb.child("roomList").child(room.id).remove();
-    // }else{
-    //splice index
-    let index;
-    for (let i = 0; i < room.userList.length; i ++){
-      let user = room.userList[i];
-      if (user.key === me.key){
-        index = i;
-        break;
+    if (room && room.creatorKey){
+      //splice index
+      let index;
+      for (let i = 0; i < room.userList.length; i ++){
+        let user = room.userList[i];
+        if (user.key === me.key){
+          index = i;
+          break;
+        }
       }
-    }
-    if (Number.isInteger(index)){
-      room.userList.splice(index, 1);
-    }
-    //remove game
-    if (room.game){
-      this.exitGame(room.game, me);
-    }
-    //check if need to inherit
-    if (room.creatorKey === me.key){
-      //check if last
-      if (room.userList.length === 0){
-        //destroy room
-        fb.child("roomList").child(room.id).remove();
-      }else{
-        //room creator exits, inherit to someone else
-        let creator = room.userList[0];
-        room.creator = creator;
-        room.creatorId = creator.userId;
-        room.creatorKey = creator.key;
+      if (Number.isInteger(index)){
+        room.userList.splice(index, 1);
       }
+      //remove game
+      if (room.game){
+        this.exitGame(room.game, me);
+      }
+      //check if need to inherit
+      if (room.creatorKey === me.key){
+        //check if last
+        if (room.userList.length === 0){
+          //destroy room
+          fb.child("roomList").child(room.id).remove();
+        }else{
+          //room creator exits, inherit to someone else
+          let creator = room.userList[0];
+          room.creator = creator;
+          room.creatorId = creator.userId;
+          room.creatorKey = creator.key;
+        }
+      }
+      //set room firebase
+      fb.child("roomList").child(room.id).set(room);
     }
-    //set room firebase
-    fb.child("roomList").child(room.id).set(room);
-    // //remove game
-    // if (room.game){
-    //   fb.child("roomList").child(room.id).remove();
-    //   this.exitGame(room.game, me);
-    //   delete me.game;
-    // }else{
-    //   fb.child("roomList").child(room.id).set(room);
-    // }
     //update user
     me.location = "lobby";
     delete me.roomID;
@@ -641,7 +629,12 @@ export default class Werewolf extends GameComponent {
       }
       let result = this.findVotingResult(indexArray);
       //set killing(index)
-      game.killing = result || randomInt(0, game.userList.length - 1);
+      if (Number.isInteger(result)){
+        game.killing = result;
+      }else{
+        game.killing = game.aliveList[Math.floor(Math.random() * game.aliveList.length)].place;
+      }
+
       //cleanse commandList
       game.commandList = this.resetCommandList();
       //set judge
@@ -692,16 +685,31 @@ export default class Werewolf extends GameComponent {
       game.judge = "Time passed, now is the day.";
       //fetch doctor command
       let userKey = this.getUserKeyByRole(game, "doctor")[0];
+      let curing;
       if (userKey){
         //doctor exists
         if (this.validateCommand(game, game.commandList[userKey])){
           let index = game.commandList[userKey].value;
-          game.curing = index || randomInt(game.userList.length - 1);
-        }else{
+          curing = index
+        }
+        if (!Number.isInteger(curing)){
           //random heal if doctor doesnt pick
-          game.curing = randomInt(game.userList.length - 1);
+          curing = game.aliveList[Math.floor(Math.random() * game.aliveList.length)].place
         }
       }
+      game.overdose = false;
+      if (Number.isInteger(curing)){
+        //check if last cure same
+        if (Number.isInteger(game.curing)){
+          if (curing === game.curing){
+            game.overdose = true;
+          }
+        }
+        //set curing
+        game.curing = curing;
+      }
+      //remove command
+      game.commandList = this.resetCommandList();
       timeoutMs = 5000;
       game.step = "announce";
 
@@ -723,11 +731,18 @@ export default class Werewolf extends GameComponent {
           judgeWords = "This night, no one has died.";
         }else{
           //kill
-          judgeWords = (game.killing + 1) + " has been killed";
+          judgeWords = (game.killing + 1) + " has been killed.";
           //splice lists
           let user = game.userList[game.killing];
           game = this.removePlayer(game, user);
         }
+      }
+      //check repetitive healing
+      if (game.overdose){
+        judgeWords += " The player at position " (game.curing + 1) + " has overdose the medicine and died.";
+        game = this.removePlayer(game, game.userList[game.curing]);
+        game.curing = null;
+        game.overdose = null;
       }
       //announce dead
       game.judge = judgeWords;
@@ -818,6 +833,11 @@ export default class Werewolf extends GameComponent {
       }
       game.judge += " You can exit the menu by clicking the button below.";
       game.end = true;
+      //room no longer in game
+      let room = this.state.room;
+      room.inGame = false;
+      room.game = game;
+      fb.child("roomList").child(me.roomID).set(room);
     }
 
     //check if winning
@@ -865,6 +885,7 @@ export default class Werewolf extends GameComponent {
         }
       }
     }
+    
     //check if self
     if (user.key === this.state.myself.key){
       //remove timer if exist
@@ -879,6 +900,10 @@ export default class Werewolf extends GameComponent {
       //remove handler
       fb.child("roomList").child(user.roomID).child("game").off();
     }
+    //final firebase
+    fb.once("value", (snapshot) => {
+      this.updateUserFirebase(user, snapshot);
+    });
   }
 
   updateCommand(game, command, index){
@@ -898,19 +923,31 @@ export default class Werewolf extends GameComponent {
     if (!user){
       console.log("not user");
     }
-    user.isDead = true;
-    let aliveIndex;
-    game.aliveList.forEach((v, i) => {
-      if (v.key === user.key){
-        aliveIndex = i;
-        return;
+    if (!game){
+      return;
+    }
+    if (!user.isDead){
+      user.isDead = true;
+      let aliveIndex;
+      if (game.aliveList){
+        game.aliveList.forEach((v, i) => {
+          if (v.key === user.key){
+            aliveIndex = i;
+            return;
+          }
+        });
+        game.aliveList.splice(aliveIndex, 1);
+        if (game.deadList){
+          game.deadList.push(user);
+        }else{
+          game.deadList = [user];
+        }
       }
-    });
-    game.aliveList.splice(aliveIndex, 1);
-    if (game.deadList){
-      game.deadList.push(user);
-    }else{
-      game.deadList = [user];
+    }
+    if (user.key === this.state.myself.key){
+      this.setState({
+        myself: user
+      })
     }
     return game;
   }

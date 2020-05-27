@@ -149,7 +149,10 @@ export default class Game extends React.Component {
                 }
             }
             //if selecting
-            let containerStyle = {};
+            let containerStyle = {
+                border: "0px",
+                backgroundImage: ""
+            };
             if (i === this.state.selecting){
                 containerStyle.border = "solid 5px yellow";
             }
