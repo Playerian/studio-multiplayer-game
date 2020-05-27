@@ -1,25 +1,25 @@
 {
   "files": {
-    "main.css": "/static/css/main.c1fb5de1.chunk.css",
-    "main.js": "/static/js/main.214c48ea.chunk.js",
-    "main.js.map": "/static/js/main.214c48ea.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.7ccc11a5.js",
-    "runtime-main.js.map": "/static/js/runtime-main.7ccc11a5.js.map",
-    "static/js/2.de49c210.chunk.js": "/static/js/2.de49c210.chunk.js",
-    "static/js/2.de49c210.chunk.js.map": "/static/js/2.de49c210.chunk.js.map",
-    "index.html": "/index.html",
-    "precache-manifest.c586b8a5f647bf3e5d784e8d705c87cc.js": "/precache-manifest.c586b8a5f647bf3e5d784e8d705c87cc.js",
-    "service-worker.js": "/service-worker.js",
-    "static/css/main.c1fb5de1.chunk.css.map": "/static/css/main.c1fb5de1.chunk.css.map",
-    "static/js/2.de49c210.chunk.js.LICENSE.txt": "/static/js/2.de49c210.chunk.js.LICENSE.txt",
-    "static/media/Logo.png": "/static/media/Logo.4454a02b.png",
-    "static/media/Whisper icon.png": "/static/media/Whisper icon.1687bbe5.png",
-    "static/media/cross.png": "/static/media/cross.0ee69f12.png"
+    "main.css": "/studio-multiplayer-game/static/css/main.c1fb5de1.chunk.css",
+    "main.js": "/studio-multiplayer-game/static/js/main.77d515e4.chunk.js",
+    "main.js.map": "/studio-multiplayer-game/static/js/main.77d515e4.chunk.js.map",
+    "runtime-main.js": "/studio-multiplayer-game/static/js/runtime-main.558293e5.js",
+    "runtime-main.js.map": "/studio-multiplayer-game/static/js/runtime-main.558293e5.js.map",
+    "static/js/2.5e384bde.chunk.js": "/studio-multiplayer-game/static/js/2.5e384bde.chunk.js",
+    "static/js/2.5e384bde.chunk.js.map": "/studio-multiplayer-game/static/js/2.5e384bde.chunk.js.map",
+    "index.html": "/studio-multiplayer-game/index.html",
+    "precache-manifest.0aaa8dea93315557586181bc1b79e116.js": "/studio-multiplayer-game/precache-manifest.0aaa8dea93315557586181bc1b79e116.js",
+    "service-worker.js": "/studio-multiplayer-game/service-worker.js",
+    "static/css/main.c1fb5de1.chunk.css.map": "/studio-multiplayer-game/static/css/main.c1fb5de1.chunk.css.map",
+    "static/js/2.5e384bde.chunk.js.LICENSE.txt": "/studio-multiplayer-game/static/js/2.5e384bde.chunk.js.LICENSE.txt",
+    "static/media/Logo.png": "/studio-multiplayer-game/static/media/Logo.4454a02b.png",
+    "static/media/Whisper icon.png": "/studio-multiplayer-game/static/media/Whisper icon.1687bbe5.png",
+    "static/media/cross.png": "/studio-multiplayer-game/static/media/cross.0ee69f12.png"
   },
   "entrypoints": [
-    "static/js/runtime-main.7ccc11a5.js",
-    "static/js/2.de49c210.chunk.js",
+    "static/js/runtime-main.558293e5.js",
+    "static/js/2.5e384bde.chunk.js",
     "static/css/main.c1fb5de1.chunk.css",
-    "static/js/main.214c48ea.chunk.js"
+    "static/js/main.77d515e4.chunk.js"
   ]
 }
